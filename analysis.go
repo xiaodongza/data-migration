@@ -34,6 +34,9 @@ func HandleSql() (string, []string, []int, []int) {
 			if is_unique(line) {
 				unique_column_index = append(unique_column_index, num_column)
 			}
+			if is_primary(line) {
+				primary_column_index = append(primary_column_index, num_column)
+			}
 			num_column++
 		} else if !is_lastline(line){
 			get_primary_name(&primary_column_name, line)
@@ -137,3 +140,11 @@ func is_unique(former string) bool {
 	}
 	return true
 }
+
+func is_primary(former string) bool {
+	if strings.Index(former, "primary") == -1 {
+		return false
+	}
+	return true
+}
+
