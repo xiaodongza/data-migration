@@ -15,12 +15,11 @@ func HandleSql() (string, []string, []int, []int) {
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
-	file, err := os.Open(sqlpath("a", "1"))
+	file, err := os.Open(sqlpath("a", "4"))
 	if err != nil {
 		log.Printf("Cannot open text file: %s, err: [%v]", sqlpath("a", "1"), err)
 	}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 	num_column := 0
 	for scanner.Scan() {
@@ -41,7 +40,7 @@ func HandleSql() (string, []string, []int, []int) {
 		} else if !is_lastline(line){
 			get_primary_name(&primary_column_name, line)
 		}
-		//fmt.Printf("%s\n", line)
+		fmt.Printf("%s\n", line)
 	}
 	for i := 0; i < len(primary_column_name); i++ {
 		for j := 0; j < len(column_name); j++ {
@@ -53,10 +52,10 @@ func HandleSql() (string, []string, []int, []int) {
 	if err := scanner.Err(); err != nil {
 		log.Printf("Cannot scanner text file: %s, err: [%v]", sqlpath("a", "1"), err)
 	}
-	fmt.Println(table_name)
-	fmt.Println(column_name)
-	fmt.Println(unique_column_index)
-	fmt.Println(primary_column_index)
+	//fmt.Println(table_name)
+	//fmt.Println(column_name)
+	//fmt.Println(unique_column_index)
+	//fmt.Println(primary_column_index)
 	return table_name, column_name, unique_column_index, primary_column_index
 }
 

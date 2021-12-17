@@ -11,7 +11,7 @@ import (
 
 
 const (
-	data_path 	= 	"F:\\data\\src_a"
+	data_path 	= 	"/tmp/data/src_a"
 	layout 		= 	"2006-01-02 15:04:05"
 )
 
@@ -37,7 +37,8 @@ func read() {
 		}
 		//fmt.Printf("Record has %d columns.\n", len(record))
 		//city, _ := iconv.ConvertString(record[2], "gb2312", "utf-8")
-		fmt.Printf("%s %s %s %s \n", record[0], record[1], record[2], record[3])
+		//fmt.Printf("%s %s %s %s \n", record[0], record[1], record[2], record[3])
+		fmt.Printf("%s\n", record[0])
 	}
 }
 
