@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-func HandleSql() (string, []string, []int, []int) {
+func HandleSql(folder, database, table string) (string, []string, []int, []int) {
 	var table_name string
 	//0表示普通键，1表示时间，2表示非空键，3表示主键
 	column_name := make([]string,0)
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
-	file, err := os.Open(sqlpath("a", "4"))
+	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open text file: %s, err: [%v]", sqlpath("a", "1"), err)
 	}
@@ -62,7 +62,7 @@ func HandleSql() (string, []string, []int, []int) {
 
 
 func sqlpath(database, table string) string {
-	return data_path + "\\" + database + "\\" + table + ".sql"
+	return "F:\\data" + "\\src_a" + "\\" + database + "\\" + table + ".sql"
 }
 
 func get_table_name(former string) string {

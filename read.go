@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"time"
@@ -11,35 +10,34 @@ import (
 
 
 const (
-	data_path 	= 	"/tmp/data/src_a"
 	layout 		= 	"2006-01-02 15:04:05"
 )
 
 //读取csv文件中的数据
-func read() {
+func reader(folder, database, table string) (*csv.Reader, error) {
 	// Op en the file
-	csvfile, err := os.Open(tablepath("a","1"))
+	csvfile, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".csv")
 	if err != nil {
 		log.Fatalln("Couldn't open the csv file", err)
+		return nil, err
 	}
 	defer csvfile.Close()
 	// Parse the file
 	r := csv.NewReader(csvfile)
 	// Iterate through the records
-	for {
-		// Read each record from csv
-		record, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		//fmt.Printf("Record has %d columns.\n", len(record))
-		//city, _ := iconv.ConvertString(record[2], "gb2312", "utf-8")
-		//fmt.Printf("%s %s %s %s \n", record[0], record[1], record[2], record[3])
-		fmt.Printf("%s\n", record[0])
-	}
+	//for {
+	//	record, err := r.Read()
+	//	if err == io.EOF {
+	//		break
+	//	}
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	for _, rec := range record {
+	//		fmt.Print("%s\n", rec)
+	//	}
+	//}
+	return r, nil
 }
 
 
@@ -47,7 +45,7 @@ func read() {
 
 //表的路径
 func tablepath(database, table string) string {
-	return data_path + "\\" + database + "\\" + table + ".csv"
+	return *dataPath + "/src_a" + "/" + database + "/" + table + ".csv"
 }
 
 
