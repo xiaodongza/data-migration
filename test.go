@@ -1,7 +1,8 @@
 package main
 
-func m() {
-	handleData()
+func main() {
+	sqlExec()
+	//handleData()
 }
 
 

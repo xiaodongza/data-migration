@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,7 +34,7 @@ func handleData() {
 				queue = append(queue, &record)
 			}
 		}
-		_, _, unique_column_index, primary_column_index :=  HandleSql("src_a", "a", strconv.Itoa(i))
+		tableName, _, unique_column_index, primary_column_index :=  HandleSql("src_a", "a", strconv.Itoa(i))
 		for index := range primary_column_index {
 			m := make(map[string]*[]string, 0)
 			for len(queue) > 0 {
@@ -85,7 +84,7 @@ func handleData() {
 			}
 		}
 		for _, rec := range queue {
-			fmt.Println(*rec)
+			makeInsertSql(tableName, *rec)
 		}
 	}
 

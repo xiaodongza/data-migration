@@ -8,16 +8,35 @@ import (
 	"strings"
 )
 
+func makeCreateSql(folder, database, table string) string {
+	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+	if err != nil {
+		log.Printf("Cannot open sql file, err: [%v]", err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	sentence := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		sentence = sentence + line
+	}
+	fmt.Println(sentence)
+	return sentence
+}
+
 func HandleSql(folder, database, table string) (string, []string, []int, []int) {
 	var table_name string
 	//0表示普通键，1表示时间，2表示非空键，3表示主键
+
 	column_name := make([]string,0)
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
 	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
-		log.Printf("Cannot open text file: %s, err: [%v]", sqlpath("a", "1"), err)
+		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -134,14 +153,14 @@ func is_lastline(former string) bool {
 }
 
 func is_unique(former string) bool {
-	if strings.Index(former, "unique") == -1 {
+	if strings.Index(former, "UNIQUE") == -1 {
 		return false
 	}
 	return true
 }
 
 func is_primary(former string) bool {
-	if strings.Index(former, "primary") == -1 {
+	if strings.Index(former, "PRIMARY") == -1 {
 		return false
 	}
 	return true
