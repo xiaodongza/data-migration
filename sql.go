@@ -21,10 +21,13 @@ func sqlExec() {
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
-	s := "`1`"
+	_, err = db.Exec(makeCreateSql("src_a", "a","2") + `;`)
+	if err != nil {
+		fmt.Println(err)
+	}
 	//s := make([]string, 0)
 	//s = append(s, "a", "b","c", "d")
-	rows, err := db.Query(`select * from` + s + `;`)
+	rows, err := db.Query(`select * from` + "`1`" + `;`)
 	//fmt.Println("select * from \x601\x60;")
 	if err != nil {
 		fmt.Println("query failed",err)
@@ -39,10 +42,7 @@ func sqlExec() {
 	}
 	rows.Close()
 
-	_, err = db.Exec(makeCreateSql("src_a", "a","2") + `;`)
-	if err != nil {
-		fmt.Println(err)
-	}
+
 }
 
 func makeInsertSql(table_name string, row []string) string {
