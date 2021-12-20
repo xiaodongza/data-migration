@@ -2,17 +2,18 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func handleData() {
 	dbs := make([]string, 0)
 	dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
 	//dbs = append(dbs, "a", "b", "c", "d")
-
 	srcs := make([]string, 0)
 	srcs = append(srcs, "src_a", "src_b")
 	for _, db := range dbs {
@@ -23,6 +24,7 @@ func handleData() {
 		for _, db := range dbs {
 			for _, src := range srcs {
 				csvfile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+				//csvfile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
@@ -119,17 +121,24 @@ func handleData() {
 				for _, rec := range m {
 					queue = append(queue, rec)
 				}
+				for _, rec := range queue {
+					fmt.Println("%v", rec)
+				}
 			}
-			sqlExec(db, i, queue)
+
 		}
 	}
 }
 
 func euqals(a, b *[]string) bool {
 	a1, b1 := *a, *b
+	num := 0
 	for i := 0; i < len(a1); i++ {
-		if a1[i] != b1[i] {
-			return false
+		if strings.Compare(a1[i], b1[i]) != 0 {
+			num++
+			if num > 1 {
+				return false
+			}
 		}
 	}
 	return true

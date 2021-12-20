@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
+	_ "data-migration/mysql"
 	"database/sql"
 	"fmt"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"log"
 	"os"
 	"strconv"
@@ -31,8 +31,8 @@ func createDatabase(database string) {
 
 func sqlExec(database string, i int,queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	//db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(localhost:3306)/tencent_cloud?charset=utf8")
-	db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/tencent_cloud?charset=utf8")
+	db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -41,11 +41,22 @@ func sqlExec(database string, i int,queue []*[]string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	for len(queue) > 0 {
-		rec := queue[0]
-		queue =  queue[1: len(queue)]
-		rec1 := *rec
-		db.Exec(makeInsertSql(strconv.Itoa(i), rec1))
+	//for len(queue) > 0{
+	//	rec := queue[0]
+	//	queue =  queue[1: len(queue)]
+	//	rec1 := *rec
+	//	db.Exec(makeInsertSql(strconv.Itoa(i), rec1))
+	//}
+	for len(queue) > 1000 {
+		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), 1000, queue))
+		if err != nil {
+			fmt.Println(err)
+		}
+		queue =  queue[1000: len(queue)]
+	}
+	if len(queue) > 0 {
+		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue))
+		queue =  queue[len(queue):]
 	}
 	//rows, err := db.Query(`select * from` + "`1`" + `;`)
 	//fmt.Println("select * from \x601\x60;")
@@ -76,6 +87,28 @@ func makeInsertSql(table_name string, row []string) string {
 	return sentence
 }
 
+func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
+	sentence := "INSERT INTO `" + table_name + "` VALUES "
+	for i := 0; i < r; i++ {
+		sentence = sentence + "("
+		row := queue[i]
+		row1 := *row
+		for j, meta_data := range row1 {
+			if j != 0 {
+				sentence = sentence + ","
+			}
+			sentence = sentence + "\"" + meta_data + "\""
+		}
+		sentence = sentence + ")"
+		if i != r - 1 {
+			sentence = sentence + ","
+		}
+	}
+	sentence = sentence + ";"
+	fmt.Println(sentence)
+	return sentence
+}
+
 func makeCreateTableSql(folder, database, table string) string {
 	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
 	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
@@ -96,7 +129,8 @@ func makeCreateTableSql(folder, database, table string) string {
 
 func makeCreateDatabaseSql(database string) string {
 	sentence := ""
-	sentence = sentence + "CREATE DATABASE" + database + ";"
+	sentence = sentence + "CREATE DATABASE " + database + ";"
+	fmt.Println(sentence)
 	return sentence
 }
 
