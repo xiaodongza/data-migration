@@ -8,22 +8,7 @@ import (
 	"strings"
 )
 
-func makeCreateSql(folder, database, table string) string {
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
-	if err != nil {
-		log.Printf("Cannot open sql file, err: [%v]", err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	sentence := ""
-	for scanner.Scan() {
-		line := scanner.Text()
-		sentence = sentence + line
-	}
-	fmt.Println(sentence)
-	return sentence
-}
+
 
 func HandleSql(folder, database, table string) (string, []string, []int, []int) {
 	var table_name string
@@ -61,13 +46,22 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 		}
 		fmt.Printf("%s\n", line)
 	}
-	for i := 0; i < len(primary_column_name); i++ {
+	if len(primary_column_name) != 0 {
+		for i := 0; i < len(primary_column_name); i++ {
+			for j := 0; j < len(column_name); j++ {
+				if strings.Compare(primary_column_name[i], column_name[j]) == 0 {
+					primary_column_index = append(primary_column_index, j)
+				}
+			}
+		}
+	} else {
 		for j := 0; j < len(column_name); j++ {
-			if strings.Compare(primary_column_name[i], column_name[j]) == 0 {
+			if strings.Compare("updated_at", column_name[j]) == 0 {
 				primary_column_index = append(primary_column_index, j)
 			}
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		log.Printf("Cannot scanner text file: %s, err: [%v]", sqlpath("a", "1"), err)
 	}
