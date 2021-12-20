@@ -40,7 +40,8 @@ func handleData() {
 				}
 			}
 			_, _, unique_column_index, primary_column_index :=  HandleSql("src_a", "a", strconv.Itoa(i))
-			for index := range primary_column_index {
+			if len(primary_column_index) == 1 {
+				index := primary_column_index[0]
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
@@ -62,9 +63,41 @@ func handleData() {
 				for _, rec := range m {
 					rec1 := *rec
 					queue = append(queue, &rec1)
+				}
+			} else if len(primary_column_index) > 1{
+				m_help := make(map[*string]*[]string, 0)
+				for _, rec := range queue {
+					rec1 := *rec
+					m_help[&rec1[primary_column_index[0]]] = rec
+				}
+				index := primary_column_index[0]
+				m := make(map[string]*[]string, 0)
+				for len(queue) > 0 {
+					rec := queue[0]
+					queue =  queue[1: len(queue)]
+					rec1 := *rec
+					cur := rec1[index]
+					value, ok := m[cur]
+					if ok {
+						if euqals(m_help[&cur], m_help[&rec1[index]]) {
+							value1 := *value
+							time_pre := value1[len(value1) - 1]
+							time_cur := rec1[len(rec1) - 1]
+							if(time_cur >= time_pre) {
+								delete(m_help, &cur)
+							} else {
+								delete(m_help, &rec1[index])
+							}
+						}
+					} else {
+						m[cur] = rec
+					}
+				}
+				for _, rec := range m_help {
+					queue = append(queue, rec)
 				}
 			}
-			for index := range unique_column_index {
+			for _, index := range unique_column_index {
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
@@ -84,13 +117,22 @@ func handleData() {
 					}
 				}
 				for _, rec := range m {
-					rec1 := *rec
-					queue = append(queue, &rec1)
+					queue = append(queue, rec)
 				}
 			}
 			sqlExec(db, i, queue)
 		}
 	}
+}
+
+func euqals(a, b *[]string) bool {
+	a1, b1 := *a, *b
+	for i := 0; i < len(a1); i++ {
+		if a1[i] != b1[i] {
+			return false
+		}
+	}
+	return true
 }
 
 
