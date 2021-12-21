@@ -18,8 +18,8 @@ var dstPassword *string
 //
 //  you can test this example by:
 //  go run main.go --data_path /tmp/data --dst_ip 127.0.0.1 --dst_port 3306 --dst_user root --dst_password 123456789
-func m() {
-	dataPath = flag.String("data_path", "/tmp/data", "dir path of source data")
+func main() {
+	dataPath = flag.String("data_path", "/tmp/data/", "dir path of source data")
 	dstIP = flag.String("dst_ip", "", "ip of dst database address")
 	dstPort = flag.Int("dst_port", 0, "port of dst database address")
 	dstUser = flag.String("dst_user", "", "user name of dst database")

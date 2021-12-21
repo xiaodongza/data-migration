@@ -18,8 +18,8 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}

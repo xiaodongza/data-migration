@@ -18,10 +18,15 @@ type info struct{
 
 
 func createDatabase(database string) {
-	db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/tencent_cloud?charset=utf8")
+	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
 	//db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
+	}
+	_, err = db.Exec(makeDropDatabaseSql(database))
+	if err != nil {
+		fmt.Println("drop database failed",err)
 	}
 	_, err = db.Exec(makeCreateDatabaseSql(database))
 	if err != nil {
@@ -31,16 +36,20 @@ func createDatabase(database string) {
 
 func sqlExec(database string, i int,queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
-	db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/" + database + "?charset=utf8")
+	db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
 	//db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
 	//创建表
+	_, err = db.Exec(makeUseDatabaseSql(database))
+	if err != nil {
+		fmt.Println("use database failed",err)
+	}
 	_, err = db.Exec(makeCreateTableSql("src_a", database, strconv.Itoa(i)))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("create table failed", err)
 	}
 	//for len(queue) > 0{
 	//	rec := queue[0]
@@ -48,12 +57,13 @@ func sqlExec(database string, i int,queue []*[]string) {
 	//	rec1 := *rec
 	//	db.Exec(makeInsertSql(strconv.Itoa(i), rec1))
 	//}
-	for len(queue) > 1000 {
-		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), 1000, queue))
+	sizeOfBathInsert := 1000
+	for len(queue) > sizeOfBathInsert {
+		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
 		if err != nil {
 			fmt.Println(err)
 		}
-		queue =  queue[1000: len(queue)]
+		queue =  queue[sizeOfBathInsert: len(queue)]
 	}
 	if len(queue) > 0 {
 		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue))
@@ -106,13 +116,13 @@ func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 		}
 	}
 	sentence = sentence + ";"
-	fmt.Println(sentence)
+	//fmt.Println(sentence)
 	return sentence
 }
 
 func makeCreateTableSql(folder, database, table string) string {
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
@@ -128,9 +138,23 @@ func makeCreateTableSql(folder, database, table string) string {
 	return sentence
 }
 
+func makeDropDatabaseSql(database string) string {
+	sentence := ""
+	sentence = sentence + "DROP DATABASE " + database + ";"
+	fmt.Println(sentence)
+	return sentence
+}
+
 func makeCreateDatabaseSql(database string) string {
 	sentence := ""
 	sentence = sentence + "CREATE DATABASE " + database + ";"
+	fmt.Println(sentence)
+	return sentence
+}
+
+func makeUseDatabaseSql(database string) string {
+	sentence := ""
+	sentence = sentence + "USE " + database + ";"
 	fmt.Println(sentence)
 	return sentence
 }
