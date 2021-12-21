@@ -42,6 +42,32 @@ func handleData() {
 				}
 			}
 			_, _, unique_column_index, primary_column_index :=  HandleSql("src_a", "a", strconv.Itoa(i))
+			for _, index := range unique_column_index {
+				m := make(map[string]*[]string, 0)
+				for len(queue) > 0 {
+					rec := queue[0]
+					queue =  queue[1: len(queue)]
+					rec1 := *rec
+					cur := rec1[index]
+					value, ok := m[cur]
+					if ok {
+						value1 := *value
+						time_pre := value1[len(value1) - 1]
+						time_cur := rec1[len(rec1) - 1]
+						if(time_cur < time_pre) {
+							m[cur] = rec
+						}
+					} else {
+						m[cur] = rec
+					}
+				}
+				for _, rec := range m {
+					queue = append(queue, rec)
+				}
+				for _, rec := range queue {
+					fmt.Println("%v", rec)
+				}
+			}
 			if len(primary_column_index) == 1 {
 				index := primary_column_index[0]
 				m := make(map[string]*[]string, 0)
@@ -74,9 +100,9 @@ func handleData() {
 				}
 				index := primary_column_index[0]
 				m := make(map[string]*[]string, 0)
-				for len(queue) > 0 {
-					rec := queue[0]
-					queue =  queue[1: len(queue)]
+				i_help := 0
+				for i_help < len(queue) {
+					rec := queue[i_help]
 					rec1 := *rec
 					cur := rec1[index]
 					value, ok := m[cur]
@@ -99,33 +125,7 @@ func handleData() {
 					queue = append(queue, rec)
 				}
 			}
-			for _, index := range unique_column_index {
-				m := make(map[string]*[]string, 0)
-				for len(queue) > 0 {
-					rec := queue[0]
-					queue =  queue[1: len(queue)]
-					rec1 := *rec
-					cur := rec1[index]
-					value, ok := m[cur]
-					if ok {
-						value1 := *value
-						time_pre := value1[len(value1) - 1]
-						time_cur := rec1[len(rec1) - 1]
-						if(time_cur < time_pre) {
-							m[cur] = rec
-						}
-					} else {
-						m[cur] = rec
-					}
-				}
-				for _, rec := range m {
-					queue = append(queue, rec)
-				}
-				for _, rec := range queue {
-					fmt.Println("%v", rec)
-				}
-			}
-
+			sqlExec(db, i, queue)
 		}
 	}
 }

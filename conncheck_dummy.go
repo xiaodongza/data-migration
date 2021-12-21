@@ -8,7 +8,7 @@
 
 // +build !linux,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd,!solaris,!illumos
 
-package mysql
+package main
 
 import "net"
 

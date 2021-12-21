@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	_ "data-migration/mysql"
 	"database/sql"
 	"fmt"
 	"log"
@@ -20,6 +19,7 @@ type info struct{
 
 func createDatabase(database string) {
 	db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/tencent_cloud?charset=utf8")
+	//db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -31,8 +31,9 @@ func createDatabase(database string) {
 
 func sqlExec(database string, i int,queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
-	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/" + database + "?charset=utf8")
+	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/" + database + "?charset=utf8")
+	//db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}

@@ -1,7 +1,7 @@
 package main
 
-func m() {
-
+func main() {
+	handleData()
 }
 
 

@@ -8,7 +8,7 @@
 
 // +build gofuzz
 
-package mysql
+package main
 
 import (
 	"database/sql"
