@@ -332,7 +332,7 @@ func main() {
 }
 
 func createDatabase(database string) {
-	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
+	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
 	db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
 	if err != nil {
@@ -483,9 +483,9 @@ func euqals(a, b []string, target int) bool {
 
 func sqlExec(database string, i int,queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
-	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
+	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -550,7 +550,7 @@ func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 		}
 	}
 	sentence = sentence + ";"
-	//fmt.Println(sentence)
+	fmt.Println(sentence)
 	return sentence
 }
 
@@ -601,8 +601,8 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
