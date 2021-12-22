@@ -551,7 +551,7 @@ func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 		}
 	}
 	sentence = sentence + ";"
-	fmt.Println(sentence)
+	//fmt.Println(sentence)
 	return sentence
 }
 
