@@ -349,7 +349,7 @@ func createDatabase(database string) {
 }
 
 func handleData() {
-	wg := &sync.WaitGroup{}
+	//wg := &sync.WaitGroup{}
 	dbs := make([]string, 0)
 	dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
 	srcs := make([]string, 0)
