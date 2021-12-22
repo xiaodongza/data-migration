@@ -333,8 +333,8 @@ func main() {
 
 func createDatabase(database string) {
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
-	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -594,19 +594,19 @@ func makeUseDatabaseSql(database string) string {
 }
 
 func HandleSql(folder, database, table string) (string, []string, []int, []int) {
-	var table_name string
-	//0表示普通键，1表示时间，2表示非空键，3表示主键
-
-	column_name := make([]string,0)
-	primary_column_name := make([]string, 0)
-	primary_column_index := make([]int, 0)
-	unique_column_index := make([]int, 0)
 	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
 	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
 	defer file.Close()
+
+	var table_name string
+	column_name := make([]string,0)
+	primary_column_name := make([]string, 0)
+	primary_column_index := make([]int, 0)
+	unique_column_index := make([]int, 0)
+
 	scanner := bufio.NewScanner(file)
 	num_column := 0
 	for scanner.Scan() {
