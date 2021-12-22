@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -65,27 +66,27 @@ var dstPassword *string
 //  you can test this example by:
 //  go run main.go --data_path /tmp/data --dst_ip 127.0.0.1 --dst_port 3306 --dst_user root --dst_password 123456789
 func main() {
-	//dataPath = flag.String("data_path", "/tmp/data", "dir path of source data")
-	//dstIP = flag.String("dst_ip", "", "ip of dst database address")
-	//dstPort = flag.Int("dst_port", 0, "port of dst database address")
-	//dstUser = flag.String("dst_user", "", "user name of dst database")
-	//dstPassword = flag.String("dst_password", "", "password of dst database")
-	//
-	//flag.Parse()
-	//fmt.Printf("data path:%v\n", *dataPath)
-	//fmt.Printf("dst ip:%v\n", *dstIP)
-	//fmt.Printf("dst port:%v\n", *dstPort)
-	//fmt.Printf("dst user:%v\n", *dstUser)
-	//fmt.Printf("dst password:%v\n", *dstPassword)
-	//fmt.Println(*dataPath)
-	//fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
+	dataPath = flag.String("data_path", "/tmp/data", "dir path of source data")
+	dstIP = flag.String("dst_ip", "", "ip of dst database address")
+	dstPort = flag.Int("dst_port", 0, "port of dst database address")
+	dstUser = flag.String("dst_user", "", "user name of dst database")
+	dstPassword = flag.String("dst_password", "", "password of dst database")
+
+	flag.Parse()
+	fmt.Printf("data path:%v\n", *dataPath)
+	fmt.Printf("dst ip:%v\n", *dstIP)
+	fmt.Printf("dst port:%v\n", *dstPort)
+	fmt.Printf("dst user:%v\n", *dstUser)
+	fmt.Printf("dst password:%v\n", *dstPassword)
+	fmt.Println(*dataPath)
+	fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
 	handleData()
 }
 
 func createDatabase(database string) {
-	db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
-	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
+	db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -100,6 +101,7 @@ func createDatabase(database string) {
 }
 
 func handleData() {
+	wg := &sync.WaitGroup{}
 	dbs := make([]string, 0)
 	dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
 	srcs := make([]string, 0)
@@ -111,8 +113,8 @@ func handleData() {
 		for _, db := range dbs {
 			var queue []*[]string
 			for _, src := range srcs {
-				csvfile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
-				//csvfile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+				//csvfile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+				csvfile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
@@ -207,9 +209,14 @@ func handleData() {
 					queue = append(queue, &rec1)
 				}
 			}
-			sqlExec(db, i, queue)
+			wg.Add(1)
+			go func(q []*[]string) {
+				defer wg.Done()
+				sqlExec(db, i, q)
+			}(queue)
 		}
 	}
+	wg.Wait()
 }
 
 func euqals(a, b []string, target int) bool {
@@ -228,9 +235,9 @@ func euqals(a, b []string, target int) bool {
 
 func sqlExec(database string, i int,queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
-	db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	//db, err := sql.Open("mysql", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("mysql", "root:134676@tcp(localhost:3306)/?charset=utf8")
+	db, err := sql.Open("mysql", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -300,8 +307,8 @@ func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 }
 
 func makeCreateTableSql(folder, database, table string) string {
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
