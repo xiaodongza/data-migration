@@ -3072,11 +3072,11 @@ func (mf *mysqlField) scanType() reflect.Type {
 		fieldTypeTime:
 		return scanTypeRawBytes
 
-	case fieldTypeDate, fieldTypeNewDate,
-		fieldTypeTimestamp, fieldTypeDateTime:
-		// NullTime is always returned for more consistent behavior as it can
-		// handle both cases of parseTime regardless if the field is nullable.
-		return scanTypeNullTime
+	//case fieldTypeDate, fieldTypeNewDate,
+	//	fieldTypeTimestamp, fieldTypeDateTime:
+	//	// NullTime is always returned for more consistent behavior as it can
+	//	// handle both cases of parseTime regardless if the field is nullable.
+	//	return scanTypeNullTime
 
 	default:
 		return scanTypeUnknown
