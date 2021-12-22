@@ -457,14 +457,15 @@ func handleData() {
 					queue = append(queue, &rec1)
 				}
 			}
-			wg.Add(1)
-			go func(q []*[]string) {
-				defer wg.Done()
-				sqlExec(db, i, q)
-			}(queue)
+			sqlExec(db, i, queue)
+			//wg.Add(1)
+			//go func(q []*[]string) {
+			//	defer wg.Done()
+			//	sqlExec(db, i, q)
+			//}(queue)
 		}
 	}
-	wg.Wait()
+	//wg.Wait()
 }
 
 func euqals(a, b []string, target int) bool {
