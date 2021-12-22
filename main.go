@@ -315,10 +315,10 @@ var dstPassword *string
 //  go run main.go --data_path /tmp/data --dst_ip 127.0.0.1 --dst_port 3306 --dst_user root --dst_password 123456789
 func main() {
 	dataPath = flag.String("data_path", "/tmp/data", "dir path of source data")
-	dstIP = flag.String("dst_ip", "", "ip of dst database address")
-	dstPort = flag.Int("dst_port", 0, "port of dst database address")
-	dstUser = flag.String("dst_user", "", "user name of dst database")
-	dstPassword = flag.String("dst_password", "", "password of dst database")
+	dstIP = flag.String("dst_ip", "172.16.0.116", "ip of dst database address")
+	dstPort = flag.Int("dst_port", 3306, "port of dst database address")
+	dstUser = flag.String("dst_user", "test", "user name of dst database")
+	dstPassword = flag.String("dst_password", "Henkxie1314#", "password of dst database")
 
 	flag.Parse()
 	fmt.Printf("data path:%v\n", *dataPath)
@@ -328,13 +328,15 @@ func main() {
 	fmt.Printf("dst password:%v\n", *dstPassword)
 	fmt.Println(*dataPath)
 	fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
+	fmt.Println(*dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
 	handleData()
 }
 
 func createDatabase(database string) {
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
-	db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//db, err := sql.Open("help", "test:Henkxie1314#@tcp(172.16.0.116:3306)/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed",err)
 	}
@@ -361,13 +363,13 @@ func handleData() {
 		for _, db := range dbs {
 			var queue []*[]string
 			for _, src := range srcs {
-				//csvfile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
-				csvfile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+				//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+				csvFile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
-				defer csvfile.Close()
-				r := csv.NewReader(csvfile)
+				//defer csvfile.Close()
+				r := csv.NewReader(csvFile)
 				for {
 					record, err := r.Read()
 					if err == io.EOF {
