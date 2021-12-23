@@ -362,15 +362,16 @@ func handleData() {
 	dbs = append(dbs, `a`, `b`, `c`, `d`, `e`, `f`, `g`)
 	srcs := make([]string, 0)
 	srcs = append(srcs, "src_a", "src_b")
-	for _, db := range dbs {
-		createDatabase(db)
-	}
-	for i := 1; i <= 4; i++ {
+	//for _, db := range dbs {
+	//	createDatabase(db)
+	//}
+	for i := 2; i <= 2; i++ {
 		for _, db := range dbs {
 			var queue []*[]string
+			num := 0
 			for _, src := range srcs {
-				//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
-				csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+				csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+				//csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
@@ -387,8 +388,9 @@ func handleData() {
 					queue = append(queue, &record)
 				}
 			}
-			_, _, unique_column_index, primary_column_index := HandleSql("src_a", db, strconv.Itoa(i))
-			for _, index := range unique_column_index {
+			_, _, uniqueColumnIndex, primaryColumnIndex, isFloat := HandleSql("src_a", db, strconv.Itoa(i))
+			fmt.Println(primaryColumnIndex)
+			for _, index := range uniqueColumnIndex {
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
@@ -397,10 +399,11 @@ func handleData() {
 					cur := rec1[index]
 					value, ok := m[cur]
 					if ok {
+						num++
 						value1 := *value
-						time_pre := value1[len(value1)-1]
-						time_cur := rec1[len(rec1)-1]
-						if time_cur > time_pre {
+						timePre := value1[len(value1)-1]
+						timeCur := rec1[len(rec1)-1]
+						if timeCur >= timePre {
 							m[cur] = rec
 						}
 					} else {
@@ -414,8 +417,8 @@ func handleData() {
 				// 	fmt.Println("%v", rec)
 				// }
 			}
-			if len(primary_column_index) == 1 {
-				index := primary_column_index[0]
+			if len(primaryColumnIndex) == 1 {
+				index := primaryColumnIndex[0]
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
@@ -424,10 +427,11 @@ func handleData() {
 					cur := rec1[index]
 					value, ok := m[cur]
 					if ok {
+						num++
 						value1 := *value
-						time_pre := value1[len(value1)-1]
-						time_cur := rec1[len(rec1)-1]
-						if time_cur > time_pre {
+						timePre := value1[len(value1)-1]
+						timeCur := rec1[len(rec1)-1]
+						if timeCur >= timePre {
 							m[cur] = rec
 						}
 					} else {
@@ -438,8 +442,8 @@ func handleData() {
 					rec1 := *rec
 					queue = append(queue, &rec1)
 				}
-			} else if len(primary_column_index) > 1 {
-				index := primary_column_index[0]
+			} else if len(primaryColumnIndex) > 1 {
+				index := primaryColumnIndex[0]
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
@@ -449,10 +453,13 @@ func handleData() {
 					value, ok := m[cur]
 					if ok {
 						value1 := *value
-						if euqals(rec1, value1, len(primary_column_index)) {
+						//fmt.Println(rec1)
+						//fmt.Println(value1)
+						if euqals(rec1, value1, primaryColumnIndex, len(primaryColumnIndex), isFloat) {
 							timePre := value1[len(value1)-1]
 							timeCur := rec1[len(rec1)-1]
-							if timeCur > timePre {
+							num++
+							if timeCur >= timePre {
 								m[cur] = rec
 							}
 						}
@@ -465,7 +472,9 @@ func handleData() {
 					queue = append(queue, &rec1)
 				}
 			}
-			sqlExec(db, i, queue)
+			fmt.Println(num)
+			//sqlExec(db, i, queue)
+			queue = queue[:0]
 			//wg.Add(1)
 			//go func(q []*[]string) {
 			//	defer wg.Done()
@@ -476,13 +485,22 @@ func handleData() {
 	//wg.Wait()
 }
 
-func euqals(a, b []string, target int) bool {
+func euqals(a, b []string, index []int, target int, isFloat bool) bool {
 	num := 0
-	for i := 0; i < len(a); i++ {
-		if a[i] == b[i] {
-			num++
-			if num == target {
-				return true
+	for _, i := range index {
+		if i == 1 && isFloat {
+			if transferFloatToDouble(a[i]) == transferFloatToDouble(b[i]) {
+				num++
+				if num == target {
+					return true
+				}
+			}
+		} else {
+			if a[i] == b[i] {
+				num++
+				if num == target {
+					return true
+				}
 			}
 		}
 	}
@@ -510,13 +528,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 	if err != nil {
 		fmt.Println("create table failed", err)
 	}
-	//for len(queue) > 0{
-	//	rec := queue[0]
-	//	queue =  queue[1: len(queue)]
-	//	rec1 := *rec
-	//	db.Exec(makeInsertSql(strconv.Itoa(i), rec1))
-	//}
-	sizeOfBathInsert := 10000
+	sizeOfBathInsert := 100
 	for len(queue) >= sizeOfBathInsert {
 		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
 		if err != nil {
@@ -531,30 +543,17 @@ func sqlExec(database string, i int, queue []*[]string) {
 	fmt.Println("insert a table success")
 }
 
-func makeInsertSql(table_name string, row []string) string {
-	sentence := "INSERT INTO `" + table_name + "` VALUES("
-	for i, meta_data := range row {
-		if i != 0 {
-			sentence = sentence + ","
-		}
-		sentence = sentence + "\"" + meta_data + "\""
-	}
-	sentence = sentence + ");"
-	//fmt.Println(sentence)
-	return sentence
-}
-
 func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 	sentence := "INSERT INTO `" + table_name + "` VALUES "
 	for i := 0; i < r; i++ {
 		sentence = sentence + "("
 		row := queue[i]
 		row1 := *row
-		for j, meta_data := range row1 {
+		for j, metaData := range row1 {
 			if j != 0 {
 				sentence = sentence + ","
 			}
-			sentence = sentence + "\"" + meta_data + "\""
+			sentence = sentence + "\"" + metaData + "\""
 		}
 		sentence = sentence + ")"
 		if i != r-1 {
@@ -605,54 +604,57 @@ func makeUseDatabaseSql(database string) string {
 	return sentence
 }
 
-func HandleSql(folder, database, table string) (string, []string, []int, []int) {
-	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+func HandleSql(folder, database, table string) (string, []string, []int, []int, bool) {
+	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
 	defer file.Close()
-
-	var table_name string
-	column_name := make([]string, 0)
-	primary_column_name := make([]string, 0)
-	primary_column_index := make([]int, 0)
-	unique_column_index := make([]int, 0)
+	hasFloat := false
+	var tableName string
+	columnName := make([]string, 0)
+	primaryColumnName := make([]string, 0)
+	primaryColumnIndex := make([]int, 0)
+	uniqueColumnIndex := make([]int, 0)
 
 	scanner := bufio.NewScanner(file)
-	num_column := 0
+	numColumn := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		if num_column == 0 {
-			table_name = get_table_name(line)
-			num_column++
-		} else if is_column(line) {
-			column_name_cur := get_column_name(line)
-			column_name = append(column_name, column_name_cur)
-			if is_unique(line) {
-				unique_column_index = append(unique_column_index, num_column)
+		if numColumn == 0 {
+			tableName = getTableName(line)
+			numColumn++
+		} else if isColumn(line) {
+			columnNameCur := getColumnName(line)
+			columnName = append(columnName, columnNameCur)
+			if isUnique(line) {
+				uniqueColumnIndex = append(uniqueColumnIndex, numColumn)
 			}
-			if is_primary(line) {
-				primary_column_index = append(primary_column_index, num_column)
+			if isPrimary(line) {
+				primaryColumnIndex = append(primaryColumnIndex, numColumn)
 			}
-			num_column++
-		} else if !is_lastline(line) {
-			get_primary_name(&primary_column_name, line)
+			if isFloat(line) {
+				hasFloat = true
+			}
+			numColumn++
+		} else if !isLastline(line) {
+			getPrimaryName(&primaryColumnName, line)
 		}
-		fmt.Printf("%s\n", line)
+		//fmt.Printf("%s\n", line)
 	}
-	if len(primary_column_name) != 0 {
-		for i := 0; i < len(primary_column_name); i++ {
-			for j := 0; j < len(column_name); j++ {
-				if strings.Compare(primary_column_name[i], column_name[j]) == 0 {
-					primary_column_index = append(primary_column_index, j)
+	if len(primaryColumnName) != 0 {
+		for i := 0; i < len(primaryColumnName); i++ {
+			for j := 0; j < len(columnName); j++ {
+				if strings.Compare(primaryColumnName[i], columnName[j]) == 0 {
+					primaryColumnIndex = append(primaryColumnIndex, j)
 				}
 			}
 		}
 	} else {
-		for j := 0; j < len(column_name); j++ {
-			if strings.Compare("updated_at", column_name[j]) == 0 {
-				primary_column_index = append(primary_column_index, j)
+		for j := 0; j < len(columnName); j++ {
+			if strings.Compare("updated_at", columnName[j]) != 0 {
+				primaryColumnIndex = append(primaryColumnIndex, j)
 			}
 		}
 	}
@@ -661,10 +663,37 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 	//fmt.Println(column_name)
 	//fmt.Println(unique_column_index)
 	//fmt.Println(primary_column_index)
-	return table_name, column_name, unique_column_index, primary_column_index
+	return tableName, columnName, uniqueColumnIndex, primaryColumnIndex, hasFloat
 }
 
-func get_table_name(former string) string {
+func transferFloatToDouble(d string) string {
+	chuyi := -1
+	for i := 0; i < len(d); i++ {
+		if d[i] == '.' {
+			chuyi = i
+			break
+		}
+	}
+	if chuyi == -1 {
+		return d
+	}
+	if chuyi == 6 {
+		return d[:6]
+	}
+	if len(d) <= 7 {
+		return d
+	}
+	d = d[:chuyi] + d[chuyi + 1: 8]
+	num, _ := strconv.ParseInt(d, 0,64)
+	num += 5
+	num = num/10
+	s := strconv.FormatInt(int64(num), 10)
+	s = s[:chuyi] + "." + s[chuyi:6]
+	fmt.Println(s)
+	return s
+}
+
+func getTableName(former string) string {
 	start, end := 0, len(former)
 	for i := 0; i < len(former); i++ {
 		if former[i] == '`' {
@@ -681,7 +710,7 @@ func get_table_name(former string) string {
 	return former[start+1 : end]
 }
 
-func get_column_name(former string) string {
+func getColumnName(former string) string {
 	num, pre := 0, 0
 	for i := 0; i < len(former); i++ {
 		if former[i] == '`' {
@@ -697,7 +726,7 @@ func get_column_name(former string) string {
 	return ""
 }
 
-func get_primary_name(ans *[]string, former string) {
+func getPrimaryName(ans *[]string, former string) {
 	num, pre := 0, 0
 	for i := 0; i < len(former); i++ {
 		if former[i] == '`' {
@@ -712,7 +741,7 @@ func get_primary_name(ans *[]string, former string) {
 	}
 }
 
-func is_column(former string) bool {
+func isColumn(former string) bool {
 	for i := 0; i < len(former); i++ {
 		if former[i] == ' ' {
 			continue
@@ -725,21 +754,28 @@ func is_column(former string) bool {
 	return false
 }
 
-func is_lastline(former string) bool {
+func isLastline(former string) bool {
 	if former[0] == '(' {
 		return true
 	}
 	return false
 }
 
-func is_unique(former string) bool {
+func isUnique(former string) bool {
 	if strings.Index(former, "UNIQUE") == -1 {
 		return false
 	}
 	return true
 }
 
-func is_primary(former string) bool {
+func isFloat(former string) bool {
+	if strings.Index(former, "float") == -1 {
+		return false
+	}
+	return true
+}
+
+func isPrimary(former string) bool {
 	if strings.Index(former, "PRIMARY") == -1 {
 		return false
 	}
