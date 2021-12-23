@@ -279,12 +279,12 @@ var (
 	scanTypeNullFloat = reflect.TypeOf(sql.NullFloat64{})
 	scanTypeNullInt   = reflect.TypeOf(sql.NullInt64{})
 	//scanTypeNullTime  = reflect.TypeOf(sql.NullTime{})
-	scanTypeUint8     = reflect.TypeOf(uint8(0))
-	scanTypeUint16    = reflect.TypeOf(uint16(0))
-	scanTypeUint32    = reflect.TypeOf(uint32(0))
-	scanTypeUint64    = reflect.TypeOf(uint64(0))
-	scanTypeRawBytes  = reflect.TypeOf(sql.RawBytes{})
-	scanTypeUnknown   = reflect.TypeOf(new(interface{}))
+	scanTypeUint8    = reflect.TypeOf(uint8(0))
+	scanTypeUint16   = reflect.TypeOf(uint16(0))
+	scanTypeUint32   = reflect.TypeOf(uint32(0))
+	scanTypeUint64   = reflect.TypeOf(uint64(0))
+	scanTypeRawBytes = reflect.TypeOf(sql.RawBytes{})
+	scanTypeUnknown  = reflect.TypeOf(new(interface{}))
 )
 
 const defaultBufSize = 4096
@@ -326,34 +326,40 @@ func main() {
 	fmt.Printf("dst port:%v\n", *dstPort)
 	fmt.Printf("dst user:%v\n", *dstUser)
 	fmt.Printf("dst password:%v\n", *dstPassword)
-	fmt.Println(*dataPath)
-	fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
-	fmt.Println(*dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	//fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
 	handleData()
 }
 
 func createDatabase(database string) {
-	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
-	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
+	dstUser1 := *dstUser
+	dstPassword1 := "Henkxie1314#"
+	dstIP1 := *dstIP
+	dstPort1 := *dstPort
+	s := dstUser1 + ":" + dstPassword1 + "@tcp(" + dstIP1 + ":" + strconv.Itoa(dstPort1) + ")/?charset=utf8"
+	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	fmt.Println(s)
+	db, err := sql.Open("help", s)
 	//db, err := sql.Open("help", "test:Henkxie1314#@tcp(172.16.0.116:3306)/?charset=utf8")
+	//db, err := sql.Open("help", s)
 	if err != nil {
-		fmt.Println("connect failed",err)
+		fmt.Println("connect failed", err)
 	}
 	_, err = db.Exec(makeDropDatabaseSql(database))
 	if err != nil {
-		fmt.Println("drop database failed",err)
+		fmt.Println("drop database failed", err)
 	}
 	_, err = db.Exec(makeCreateDatabaseSql(database))
 	if err != nil {
-		fmt.Println("create database failed",err)
+		fmt.Println("create database failed", err)
 	}
 }
 
 func handleData() {
 	//wg := &sync.WaitGroup{}
 	dbs := make([]string, 0)
-	dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
+	// dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
+	dbs = append(dbs, `a`, `b`, `c`, `d`, `e`, `f`, `g`)
 	srcs := make([]string, 0)
 	srcs = append(srcs, "src_a", "src_b")
 	for _, db := range dbs {
@@ -364,7 +370,7 @@ func handleData() {
 			var queue []*[]string
 			for _, src := range srcs {
 				//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
-				csvFile, err := os.Open(*dataPath + "/"+ src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+				csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
@@ -381,20 +387,20 @@ func handleData() {
 					queue = append(queue, &record)
 				}
 			}
-			_, _, unique_column_index, primary_column_index :=  HandleSql("src_a", db, strconv.Itoa(i))
+			_, _, unique_column_index, primary_column_index := HandleSql("src_a", db, strconv.Itoa(i))
 			for _, index := range unique_column_index {
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
-					queue =  queue[1: len(queue)]
+					queue = queue[1:]
 					rec1 := *rec
 					cur := rec1[index]
 					value, ok := m[cur]
 					if ok {
 						value1 := *value
-						time_pre := value1[len(value1) - 1]
-						time_cur := rec1[len(rec1) - 1]
-						if time_cur < time_pre {
+						time_pre := value1[len(value1)-1]
+						time_cur := rec1[len(rec1)-1]
+						if time_cur > time_pre {
 							m[cur] = rec
 						}
 					} else {
@@ -404,24 +410,24 @@ func handleData() {
 				for _, rec := range m {
 					queue = append(queue, rec)
 				}
-				for _, rec := range queue {
-					fmt.Println("%v", rec)
-				}
+				// for _, rec := range queue {
+				// 	fmt.Println("%v", rec)
+				// }
 			}
 			if len(primary_column_index) == 1 {
 				index := primary_column_index[0]
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
-					queue =  queue[1: len(queue)]
+					queue = queue[1:]
 					rec1 := *rec
 					cur := rec1[index]
 					value, ok := m[cur]
 					if ok {
 						value1 := *value
-						time_pre := value1[len(value1) - 1]
-						time_cur := rec1[len(rec1) - 1]
-						if(time_cur < time_pre) {
+						time_pre := value1[len(value1)-1]
+						time_cur := rec1[len(rec1)-1]
+						if time_cur > time_pre {
 							m[cur] = rec
 						}
 					} else {
@@ -432,21 +438,21 @@ func handleData() {
 					rec1 := *rec
 					queue = append(queue, &rec1)
 				}
-			} else if len(primary_column_index) > 1{
+			} else if len(primary_column_index) > 1 {
 				index := primary_column_index[0]
 				m := make(map[string]*[]string, 0)
 				for len(queue) > 0 {
 					rec := queue[0]
-					queue =  queue[1: len(queue)]
+					queue = queue[1:]
 					rec1 := *rec
 					cur := rec1[index]
 					value, ok := m[cur]
 					if ok {
 						value1 := *value
-						if euqals(rec1, value1, len(primary_column_index)){
-							timePre := value1[len(value1) - 1]
-							timeCur := rec1[len(rec1) - 1]
-							if(timeCur < timePre) {
+						if euqals(rec1, value1, len(primary_column_index)) {
+							timePre := value1[len(value1)-1]
+							timeCur := rec1[len(rec1)-1]
+							if timeCur > timePre {
 								m[cur] = rec
 							}
 						}
@@ -483,19 +489,22 @@ func euqals(a, b []string, target int) bool {
 	return false
 }
 
-
-func sqlExec(database string, i int,queue []*[]string) {
+func sqlExec(database string, i int, queue []*[]string) {
 	//用户名：密码@tcp(地址:3306)/数据库
-	//db, err := sql.Open("help", *dstUser + ":" + *dstPassword + "@tcp("+ *dstIP + ":" + strconv.Itoa(*dstPort) + ")/?charset=utf8")
-	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/?charset=utf8")
-	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	dstUser1 := *dstUser
+	dstPassword1 := "Henkxie1314#"
+	dstIP1 := *dstIP
+	dstPort1 := *dstPort
+	db, err := sql.Open("help", dstUser1+":"+dstPassword1+"@tcp("+dstIP1+":"+strconv.Itoa(dstPort1)+")/?charset=utf8")
+	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
-		fmt.Println("connect failed",err)
+		fmt.Println("connect failed", err)
 	}
 	//创建表
 	_, err = db.Exec(makeUseDatabaseSql(database))
 	if err != nil {
-		fmt.Println("use database failed",err)
+		fmt.Println("use database failed", err)
 	}
 	_, err = db.Exec(makeCreateTableSql("src_a", database, strconv.Itoa(i)))
 	if err != nil {
@@ -507,17 +516,17 @@ func sqlExec(database string, i int,queue []*[]string) {
 	//	rec1 := *rec
 	//	db.Exec(makeInsertSql(strconv.Itoa(i), rec1))
 	//}
-	sizeOfBathInsert := 1000
-	for len(queue) > sizeOfBathInsert {
+	sizeOfBathInsert := 10000
+	for len(queue) >= sizeOfBathInsert {
 		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
 		if err != nil {
 			fmt.Println(err)
 		}
-		queue =  queue[sizeOfBathInsert: len(queue)]
+		queue = queue[sizeOfBathInsert:]
 	}
 	if len(queue) > 0 {
 		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue))
-		queue =  queue[len(queue):]
+		queue = queue[len(queue):]
 	}
 	fmt.Println("insert a table success")
 }
@@ -548,12 +557,12 @@ func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
 			sentence = sentence + "\"" + meta_data + "\""
 		}
 		sentence = sentence + ")"
-		if i != r - 1 {
+		if i != r-1 {
 			sentence = sentence + ","
 		}
 	}
 	sentence = sentence + ";"
-	fmt.Println(sentence)
+	//fmt.Println(sentence)
 	return sentence
 }
 
@@ -571,28 +580,28 @@ func makeCreateTableSql(folder, database, table string) string {
 		sentence = sentence + line
 	}
 	sentence = sentence + ";"
-	fmt.Println(sentence)
+	// fmt.Println(sentence)
 	return sentence
 }
 
 func makeDropDatabaseSql(database string) string {
 	sentence := ""
 	sentence = sentence + "DROP DATABASE " + database + ";"
-	fmt.Println(sentence)
+	// fmt.Println(sentence)
 	return sentence
 }
 
 func makeCreateDatabaseSql(database string) string {
 	sentence := ""
 	sentence = sentence + "CREATE DATABASE " + database + ";"
-	fmt.Println(sentence)
+	// fmt.Println(sentence)
 	return sentence
 }
 
 func makeUseDatabaseSql(database string) string {
 	sentence := ""
 	sentence = sentence + "USE " + database + ";"
-	fmt.Println(sentence)
+	// fmt.Println(sentence)
 	return sentence
 }
 
@@ -605,7 +614,7 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 	defer file.Close()
 
 	var table_name string
-	column_name := make([]string,0)
+	column_name := make([]string, 0)
 	primary_column_name := make([]string, 0)
 	primary_column_index := make([]int, 0)
 	unique_column_index := make([]int, 0)
@@ -627,7 +636,7 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 				primary_column_index = append(primary_column_index, num_column)
 			}
 			num_column++
-		} else if !is_lastline(line){
+		} else if !is_lastline(line) {
 			get_primary_name(&primary_column_name, line)
 		}
 		fmt.Printf("%s\n", line)
@@ -655,7 +664,6 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int) 
 	return table_name, column_name, unique_column_index, primary_column_index
 }
 
-
 func get_table_name(former string) string {
 	start, end := 0, len(former)
 	for i := 0; i < len(former); i++ {
@@ -670,7 +678,7 @@ func get_table_name(former string) string {
 			break
 		}
 	}
-	return former[start + 1: end]
+	return former[start+1 : end]
 }
 
 func get_column_name(former string) string {
@@ -682,7 +690,7 @@ func get_column_name(former string) string {
 				pre = i
 			}
 			if num%2 == 0 {
-				return former[pre + 1: i]
+				return former[pre+1 : i]
 			}
 		}
 	}
@@ -698,7 +706,7 @@ func get_primary_name(ans *[]string, former string) {
 				pre = i
 			}
 			if num%2 == 0 {
-				*ans = append(*ans, former[pre + 1: i])
+				*ans = append(*ans, former[pre+1:i])
 			}
 		}
 	}
@@ -709,7 +717,7 @@ func is_column(former string) bool {
 		if former[i] == ' ' {
 			continue
 		} else if former[i] == '`' {
-			return true;
+			return true
 		} else {
 			return false
 		}
@@ -738,20 +746,11 @@ func is_primary(former string) bool {
 	return true
 }
 
-
-
-
-
-
-
-
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------
-
-
 
 //auth.go
 func RegisterServerPubKey(name string, pubKey *rsa.PublicKey) {
@@ -1285,7 +1284,6 @@ const binaryCollation = "binary"
 // https://dev.mysql.com/doc/refman/5.7/en/charset-connection.html#charset-connection-impermissible-client-charset
 // They are commented out to reduce this map.
 
-
 // A denylist of collations which is unsafe to interpolate parameters.
 // These multibyte encodings may contains 0x5c (`\`) in their trailing bytes.
 var unsafeCollations = map[string]bool{
@@ -1305,7 +1303,6 @@ var unsafeCollations = map[string]bool{
 
 //conncheck.go
 var errUnexpectedRead = errors.New("unexpected read from socket")
-
 
 //
 
@@ -2071,8 +2068,6 @@ func (c *connector) Driver() driver.Driver {
 	return &MySQLDriver{}
 }
 
-
-
 const (
 	defaultAuthPlugin       = "mysql_native_password"
 	defaultMaxAllowedPacket = 4 << 20 // 4 MiB
@@ -2317,7 +2312,6 @@ func (d MySQLDriver) OpenConnector(dsn string) (driver.Connector, error) {
 		cfg: cfg,
 	}, nil
 }
-
 
 var (
 	errInvalidDSNUnescaped       = errors.New("invalid DSN: did you forget to escape a param value?")
@@ -2854,7 +2848,6 @@ func ensureHavePort(addr string) string {
 	return addr
 }
 
-
 // Various errors the driver might return. Can change between driver versions.
 var (
 	ErrInvalidConn       = errors.New("invalid connection")
@@ -2910,7 +2903,6 @@ func (me *MySQLError) Is(err error) bool {
 	}
 	return false
 }
-
 
 func (mf *mysqlField) typeDatabaseName() string {
 	switch mf.fieldType {
@@ -3086,7 +3078,6 @@ func (mf *mysqlField) scanType() reflect.Type {
 	}
 }
 
-
 func Fuzz(data []byte) int {
 	db, err := sql.Open("help", string(data))
 	if err != nil {
@@ -3095,7 +3086,6 @@ func Fuzz(data []byte) int {
 	db.Close()
 	return 1
 }
-
 
 var (
 	fileRegister       map[string]bool
@@ -3261,8 +3251,6 @@ func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 	mc.readPacket()
 	return err
 }
-
-
 
 // Scan implements the Scanner interface.
 // The value type must be time.Time or string / []byte (formatted time-string),
@@ -4635,7 +4623,6 @@ func (res *mysqlResult) RowsAffected() (int64, error) {
 	return res.affectedRows, nil
 }
 
-
 type resultSet struct {
 	columns     []mysqlField
 	columnNames []string
@@ -4843,8 +4830,6 @@ func (rows *textRows) Next(dest []driver.Value) error {
 	return io.EOF
 }
 
-
-
 type mysqlStmt struct {
 	mc         *mysqlConn
 	id         uint32
@@ -5048,7 +5033,6 @@ func callValuerValue(vr driver.Valuer) (v driver.Value, err error) {
 	return vr.Value()
 }
 
-
 type mysqlTx struct {
 	mc *mysqlConn
 }
@@ -5070,7 +5054,6 @@ func (tx *mysqlTx) Rollback() (err error) {
 	tx.mc = nil
 	return
 }
-
 
 // Registry for custom tls.Configs
 var (
@@ -5925,9 +5908,3 @@ func mapIsolationLevel(level driver.IsolationLevel) (string, error) {
 func connCheck(conn net.Conn) error {
 	return nil
 }
-
-
-
-
-
-
