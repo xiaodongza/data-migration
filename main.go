@@ -314,6 +314,7 @@ var dstPassword *string
 //  you can test this example by:
 //  go run main.go --data_path /tmp/data --dst_ip 127.0.0.1 --dst_port 3306 --dst_user root --dst_password 123456789
 func main() {
+	t := time.Now()
 	dataPath = flag.String("data_path", "/tmp/data", "dir path of source data")
 	dstIP = flag.String("dst_ip", "172.16.0.116", "ip of dst database address")
 	dstPort = flag.Int("dst_port", 3306, "port of dst database address")
@@ -328,18 +329,20 @@ func main() {
 	fmt.Printf("dst password:%v\n", *dstPassword)
 	//fmt.Println(*dataPath + "/"+ "src_a" + "/" + "a" + "/" + strconv.Itoa(1) + ".csv")
 	handleData()
+	elapsed := time.Since(t)
+	fmt.Println("run time:", elapsed)
 }
 
 func createDatabase(database string) {
-	dstUser1 := *dstUser
-	dstPassword1 := "Henkxie1314#"
-	dstIP1 := *dstIP
-	dstPort1 := *dstPort
-	s := dstUser1 + ":" + dstPassword1 + "@tcp(" + dstIP1 + ":" + strconv.Itoa(dstPort1) + ")/?charset=utf8"
-	fmt.Println(s)
-	db, err := sql.Open("help", s)
+	//dstUser1 := *dstUser
+	//dstPassword1 := "Henkxie1314#"
+	//dstIP1 := *dstIP
+	//dstPort1 := *dstPort
+	//s := dstUser1 + ":" + dstPassword1 + "@tcp(" + dstIP1 + ":" + strconv.Itoa(dstPort1) + ")/?charset=utf8"
+	//fmt.Println(s)
+	//db, err := sql.Open("help", s)
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	//db, err := sql.Open("help", "test:Henkxie1314#@tcp(172.16.0.116:3306)/?charset=utf8")
 	//db, err := sql.Open("help", s)
 	if err != nil {
@@ -540,13 +543,13 @@ func equals(a, b []string, index []int, target int, floatLine int) bool {
 }
 
 func sqlExec(database string, i int, queue []*[]string) {
-	dstUser1 := *dstUser
-	dstPassword1 := "Henkxie1314#"
-	dstIP1 := *dstIP
-	dstPort1 := *dstPort
-	db, err := sql.Open("help", dstUser1+":"+dstPassword1+"@tcp("+dstIP1+":"+strconv.Itoa(dstPort1)+")/?charset=utf8")
+	//dstUser1 := *dstUser
+	//dstPassword1 := "Henkxie1314#"
+	//dstIP1 := *dstIP
+	//dstPort1 := *dstPort
+	//db, err := sql.Open("help", dstUser1+":"+dstPassword1+"@tcp("+dstIP1+":"+strconv.Itoa(dstPort1)+")/?charset=utf8")
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed", err)
 	}
