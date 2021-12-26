@@ -582,25 +582,28 @@ func sqlExec(database string, i int, queue []*[]string) {
 }
 
 func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
-	sentence := "INSERT INTO `" + table_name + "` VALUES "
+	var buffer bytes.Buffer
+	buffer.WriteString("INSERT INTO `" + table_name + "` VALUES ")
 	for i := 0; i < r; i++ {
-		sentence = sentence + "("
+		buffer.WriteString("(")
 		row := queue[i]
 		row1 := *row
 		for j, metaData := range row1 {
 			if j != 0 {
-				sentence = sentence + ","
+				buffer.WriteString(",")
 			}
-			sentence = sentence + "\"" + metaData + "\""
+			buffer.WriteString("\"")
+			buffer.WriteString(metaData)
+			buffer.WriteString("\"")
 		}
-		sentence = sentence + ")"
+		buffer.WriteString(")")
 		if i != r-1 {
-			sentence = sentence + ","
+			buffer.WriteString(",")
 		}
 	}
-	sentence = sentence + ";"
+	buffer.WriteString(";")
 	//fmt.Println(sentence)
-	return sentence
+	return buffer.String()
 }
 
 func makeCreateTableSql(folder, database, table string) string {
