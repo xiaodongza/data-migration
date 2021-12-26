@@ -342,9 +342,10 @@ func createDatabase(database string) {
 	//fmt.Println(s)
 	//db, err := sql.Open("help", s)
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
-	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	//db, err := sql.Open("help", "test:Henkxie1314#@tcp(172.16.0.116:3306)/?charset=utf8")
 	//db, err := sql.Open("help", s)
+	db, err := sql.Open("help", "hjd:AAAaaa1_@tcp(10.0.0.6:3306)/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed", err)
 	}
@@ -549,7 +550,8 @@ func sqlExec(database string, i int, queue []*[]string) {
 	//dstPort1 := *dstPort
 	//db, err := sql.Open("help", dstUser1+":"+dstPassword1+"@tcp("+dstIP1+":"+strconv.Itoa(dstPort1)+")/?charset=utf8")
 	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
-	db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/" + database + "?charset=utf8")
+	db, err := sql.Open("help", "hjd:AAAaaa1_@tcp(10.0.0.6:3306)/?charset=utf8")
 	if err != nil {
 		fmt.Println("connect failed", err)
 	}
