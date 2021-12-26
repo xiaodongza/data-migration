@@ -576,10 +576,10 @@ func sqlExec(database string, i int, queue []*[]string) {
 	num := 0
 	wg := &sync.WaitGroup{}
 	for len(queue) >= (num + 1) * sizeOfBathInsert {
-		go func(q []*[]string) {
+		go func(q []*[]string, start int) {
 			defer wg.Done()
-			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, q, num * sizeOfBathInsert))
-		}(queue)
+			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, q, start))
+		}(queue, num * sizeOfBathInsert)
 		num++
 	}
 	if len(queue) > 0 {
@@ -587,6 +587,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 		queue = queue[len(queue):]
 	}
 	//fmt.Println("insert a table success")
+	wg.Wait()
 	db.Close()
 }
 
