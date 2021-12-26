@@ -517,7 +517,7 @@ func handleData() {
 			for _, v := range mapForJail {
 				queue = append(queue, v)
 			}
-			fmt.Println("start insert others")
+			fmt.Println("start insert")
 			sqlExec(db, i, queue)
 			//wg.Add(1)
 			//go func(q []*[]string) {
@@ -573,27 +573,27 @@ func sqlExec(database string, i int, queue []*[]string) {
 		fmt.Println("create table failed", err)
 	}
 	sizeOfBathInsert := 10000
-	for len(queue) >= sizeOfBathInsert {
-		go func() {
-			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
-		}()
-		if err != nil {
-			fmt.Println(err)
-		}
-		queue = queue[sizeOfBathInsert:]
+	num := 0
+	wg := &sync.WaitGroup{}
+	for len(queue) >= (num + 1) * sizeOfBathInsert {
+		go func(q []*[]string) {
+			defer wg.Done()
+			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, q, num * sizeOfBathInsert))
+		}(queue)
+		num++
 	}
 	if len(queue) > 0 {
-		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue))
+		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue, num * sizeOfBathInsert))
 		queue = queue[len(queue):]
 	}
 	//fmt.Println("insert a table success")
 	db.Close()
 }
 
-func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
+func makeBatchInsertSql(table_name string, r int, queue []*[]string, start int) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("INSERT INTO `" + table_name + "` VALUES ")
-	for i := 0; i < r; i++ {
+	for i := start; i < start + r; i++ {
 		buffer.WriteString("(")
 		row := queue[i]
 		row1 := *row
