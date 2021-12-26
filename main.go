@@ -360,7 +360,7 @@ func createDatabase(database string) {
 }
 
 func handleData() {
-	wg := &sync.WaitGroup{}
+	//wg := &sync.WaitGroup{}
 	dbs := make([]string, 0)
 	// dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
 	dbs = append(dbs, `a`, `b`, `c`, `d`, `e`, `f`, `g`)
@@ -485,14 +485,14 @@ func handleData() {
 							queue = append(queue, &record)
 						}
 					}
-					if len(queue) > 10000 {
-						wg.Add(1)
-						go func(q []*[]string) {
-							defer wg.Done()
-							sqlExec(db, i, q)
-						}(queue)
-						queue = queue[:0]
-					}
+					//if len(queue) >= 10000 {
+					//	wg.Add(1)
+					//	go func(q []*[]string) {
+					//		defer wg.Done()
+					//		sqlExec(db, i, q)
+					//	}(queue)
+					//	queue = queue[:0]
+					//}
 				}
 				csvFile.Close()
 			}
@@ -574,7 +574,9 @@ func sqlExec(database string, i int, queue []*[]string) {
 	}
 	sizeOfBathInsert := 10000
 	for len(queue) >= sizeOfBathInsert {
-		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
+		go func() {
+			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
+		}()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -584,7 +586,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 		db.Exec(makeBatchInsertSql(strconv.Itoa(i), len(queue), queue))
 		queue = queue[len(queue):]
 	}
-	fmt.Println("insert a table success")
+	//fmt.Println("insert a table success")
 	db.Close()
 }
 
