@@ -510,6 +510,7 @@ func handleData() {
 			for _, v := range mapForJail {
 				queue = append(queue, v)
 			}
+			fmt.Println("start insert")
 			sqlExec(db, i, queue)
 			//wg.Add(1)
 			//go func(q []*[]string) {
@@ -564,7 +565,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 	if err != nil {
 		fmt.Println("create table failed", err)
 	}
-	sizeOfBathInsert := 1000
+	sizeOfBathInsert := 10000
 	for len(queue) >= sizeOfBathInsert {
 		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
 		if err != nil {
