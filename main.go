@@ -365,7 +365,7 @@ func handleData() {
 	for _, db := range dbs {
 		createDatabase(db)
 	}
-	for i := 3; i <= 4; i++ {
+	for i := 1; i <= 4; i++ {
 		for _, db := range dbs {
 			_, _, uniqueColumnIndex, primaryColumnIndex, floatLine := HandleSql("src_a", db, strconv.Itoa(i))
 			m1 := make(map[string]*[]string, 0)//unique
