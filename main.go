@@ -575,7 +575,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 	sizeOfBathInsert := 10000
 	num := 0
 	wg := &sync.WaitGroup{}
-	for len(queue) >= (num + 1) * sizeOfBathInsert {
+	for len(queue) >= (num + 2) * sizeOfBathInsert {
 		go func(q []*[]string, start int) {
 			defer wg.Done()
 			db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, q, start))
