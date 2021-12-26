@@ -336,10 +336,10 @@ func createDatabase(database string) {
 	dstIP1 := *dstIP
 	dstPort1 := *dstPort
 	s := dstUser1 + ":" + dstPassword1 + "@tcp(" + dstIP1 + ":" + strconv.Itoa(dstPort1) + ")/?charset=utf8"
-	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
-	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	fmt.Println(s)
 	db, err := sql.Open("help", s)
+	//db, err := sql.Open("help", "root:134676@tcp(localhost:3306)/")
+	//db, err := sql.Open("help", "hjd:Hejundong1998.@tcp(182.254.128.133:138)/?charset=utf8")
 	//db, err := sql.Open("help", "test:Henkxie1314#@tcp(172.16.0.116:3306)/?charset=utf8")
 	//db, err := sql.Open("help", s)
 	if err != nil {
@@ -362,20 +362,80 @@ func handleData() {
 	dbs = append(dbs, `a`, `b`, `c`, `d`, `e`, `f`, `g`)
 	srcs := make([]string, 0)
 	srcs = append(srcs, "src_a", "src_b")
-	//for _, db := range dbs {
-	//	createDatabase(db)
-	//}
-	for i := 2; i <= 2; i++ {
+	for _, db := range dbs {
+		createDatabase(db)
+	}
+	for i := 3; i <= 4; i++ {
 		for _, db := range dbs {
-			var queue []*[]string
-			num := 0
+			_, _, uniqueColumnIndex, primaryColumnIndex, floatLine := HandleSql("src_a", db, strconv.Itoa(i))
+			m1 := make(map[string]*[]string, 0)//unique
+			m2 := make(map[string]*[]string, 0)//primary
+			if len(uniqueColumnIndex) != 0 {
+				index := uniqueColumnIndex[0]
+				m := make(map[string]bool, 0)
+				for _, src := range srcs {
+					//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+					csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+					if err != nil {
+						log.Fatalln("Couldn't open the csv file", err)
+					}
+					r := csv.NewReader(csvFile)
+					for {
+						record, err := r.Read()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							log.Fatal(err)
+						}
+						unique := record[index]
+						_, ok := m[unique]
+						if ok {
+							m1[unique] = nil
+						} else {
+							m[unique] = true
+						}
+					}
+					csvFile.Close()
+				}
+			}
+			if len(primaryColumnIndex) != 0 {
+				index := primaryColumnIndex[0]
+				m := make(map[string]bool, 0)
+				for _, src := range srcs {
+					//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+					csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+					if err != nil {
+						log.Fatalln("Couldn't open the csv file", err)
+					}
+					r := csv.NewReader(csvFile)
+					for {
+						record, err := r.Read()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							log.Fatal(err)
+						}
+						primary := record[index]
+						_, ok := m[primary]
+						if ok {
+							m2[primary] = nil
+						} else {
+							m[primary] = true
+						}
+					}
+					csvFile.Close()
+				}
+			}
+			queue := make([]*[]string, 0)
+			jail := make([][]string, 0)
 			for _, src := range srcs {
-				csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
-				//csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
+				//csvFile, err := os.Open("F:\\data\\" + src + "\\" + db + "\\" + strconv.Itoa(i) + ".csv")
+				csvFile, err := os.Open(*dataPath + "/" + src + "/" + db + "/" + strconv.Itoa(i) + ".csv")
 				if err != nil {
 					log.Fatalln("Couldn't open the csv file", err)
 				}
-				//defer csvfile.Close()
 				r := csv.NewReader(csvFile)
 				for {
 					record, err := r.Read()
@@ -385,96 +445,68 @@ func handleData() {
 					if err != nil {
 						log.Fatal(err)
 					}
-					queue = append(queue, &record)
-				}
-			}
-			_, _, uniqueColumnIndex, primaryColumnIndex, isFloat := HandleSql("src_a", db, strconv.Itoa(i))
-			fmt.Println(primaryColumnIndex)
-			for _, index := range uniqueColumnIndex {
-				m := make(map[string]*[]string, 0)
-				for len(queue) > 0 {
-					rec := queue[0]
-					queue = queue[1:]
-					rec1 := *rec
-					cur := rec1[index]
-					value, ok := m[cur]
-					if ok {
-						num++
-						value1 := *value
-						timePre := value1[len(value1)-1]
-						timeCur := rec1[len(rec1)-1]
-						if timeCur >= timePre {
-							m[cur] = rec
+					for _, index := range uniqueColumnIndex {
+						if value, ok := m1[record[index]]; ok {
+							if value == nil {
+								m1[record[uniqueColumnIndex[0]]] = &record
+							} else {
+								value1 := *value
+								if value1[len(*value) - 1] < record[len(*value) - 1] {
+									m1[record[index]] = &record
+								}
+							}
+						} else {
+							queue = append(queue, &record)
+						}
+					}
+					if len(primaryColumnIndex) == 1 {
+						index := primaryColumnIndex[0]
+						if value, ok := m2[record[index]]; ok {
+							if value == nil {
+								m2[record[primaryColumnIndex[0]]] = &record
+							} else {
+								value1 := *value
+								if value1[len(*value) - 1] < record[len(*value) - 1] {
+									m2[record[index]] = &record
+								}
+							}
+						} else {
+							queue = append(queue, &record)
 						}
 					} else {
-						m[cur] = rec
-					}
-				}
-				for _, rec := range m {
-					queue = append(queue, rec)
-				}
-				// for _, rec := range queue {
-				// 	fmt.Println("%v", rec)
-				// }
-			}
-			if len(primaryColumnIndex) == 1 {
-				index := primaryColumnIndex[0]
-				m := make(map[string]*[]string, 0)
-				for len(queue) > 0 {
-					rec := queue[0]
-					queue = queue[1:]
-					rec1 := *rec
-					cur := rec1[index]
-					value, ok := m[cur]
-					if ok {
-						num++
-						value1 := *value
-						timePre := value1[len(value1)-1]
-						timeCur := rec1[len(rec1)-1]
-						if timeCur >= timePre {
-							m[cur] = rec
+						index := primaryColumnIndex[0]
+						if _, ok := m2[record[index]]; ok {
+							jail = append(jail, record)
+						} else {
+							queue = append(queue, &record)
 						}
-					} else {
-						m[cur] = rec
 					}
 				}
-				for _, rec := range m {
-					rec1 := *rec
-					queue = append(queue, &rec1)
-				}
-			} else if len(primaryColumnIndex) > 1 {
-				index := primaryColumnIndex[0]
-				m := make(map[string]*[]string, 0)
-				for len(queue) > 0 {
-					rec := queue[0]
-					queue = queue[1:]
-					rec1 := *rec
-					cur := rec1[index]
-					value, ok := m[cur]
-					if ok {
+				csvFile.Close()
+			}
+			mapForJail := make(map[string]*[]string, 0)
+			if len(jail) != 0 {
+				for _, rec1 := range jail {
+
+					if value, ok := mapForJail[rec1[primaryColumnIndex[0]]]; ok {
 						value1 := *value
-						//fmt.Println(rec1)
-						//fmt.Println(value1)
-						if euqals(rec1, value1, primaryColumnIndex, len(primaryColumnIndex), isFloat) {
-							timePre := value1[len(value1)-1]
-							timeCur := rec1[len(rec1)-1]
-							num++
-							if timeCur >= timePre {
-								m[cur] = rec
+						if equals(rec1, value1, primaryColumnIndex, len(primaryColumnIndex), floatLine) {
+							if value1[len(*value) - 1] < rec1[len(*value) - 1] {
+								mapForJail[rec1[primaryColumnIndex[0]]] = &rec1
 							}
 						}
 					} else {
-						m[cur] = rec
+						mapForJail[rec1[primaryColumnIndex[0]]] = &rec1
 					}
 				}
-				for _, rec := range m {
-					rec1 := *rec
-					queue = append(queue, &rec1)
-				}
 			}
-			fmt.Println(num)
-			//sqlExec(db, i, queue)
-			queue = queue[:0]
+			for _, v := range m1 {
+				queue = append(queue, v)
+			}
+			for _, v := range mapForJail {
+				queue = append(queue, v)
+			}
+			sqlExec(db, i, queue)
 			//wg.Add(1)
 			//go func(q []*[]string) {
 			//	defer wg.Done()
@@ -485,10 +517,10 @@ func handleData() {
 	//wg.Wait()
 }
 
-func euqals(a, b []string, index []int, target int, isFloat bool) bool {
+func equals(a, b []string, index []int, target int, floatLine int) bool {
 	num := 0
 	for _, i := range index {
-		if i == 1 && isFloat {
+		if i == floatLine {
 			if transferFloatToDouble(a[i]) == transferFloatToDouble(b[i]) {
 				num++
 				if num == target {
@@ -508,7 +540,6 @@ func euqals(a, b []string, index []int, target int, isFloat bool) bool {
 }
 
 func sqlExec(database string, i int, queue []*[]string) {
-	//用户名：密码@tcp(地址:3306)/数据库
 	dstUser1 := *dstUser
 	dstPassword1 := "Henkxie1314#"
 	dstIP1 := *dstIP
@@ -528,7 +559,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 	if err != nil {
 		fmt.Println("create table failed", err)
 	}
-	sizeOfBathInsert := 100
+	sizeOfBathInsert := 1000
 	for len(queue) >= sizeOfBathInsert {
 		_, err := db.Exec(makeBatchInsertSql(strconv.Itoa(i), sizeOfBathInsert, queue))
 		if err != nil {
@@ -541,6 +572,7 @@ func sqlExec(database string, i int, queue []*[]string) {
 		queue = queue[len(queue):]
 	}
 	fmt.Println("insert a table success")
+	db.Close()
 }
 
 func makeBatchInsertSql(table_name string, r int, queue []*[]string) string {
@@ -604,14 +636,14 @@ func makeUseDatabaseSql(database string) string {
 	return sentence
 }
 
-func HandleSql(folder, database, table string) (string, []string, []int, []int, bool) {
-	file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
-	//file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
+func HandleSql(folder, database, table string) (string, []string, []int, []int, int) {
+	//file, err := os.Open("F:\\data\\" + folder + "\\" + database + "\\" + table + ".sql")
+	file, err := os.Open(*dataPath + "/" + folder + "/" + database + "/" + table + ".sql")
 	if err != nil {
 		log.Printf("Cannot open sql file, err: [%v]", err)
 	}
 	defer file.Close()
-	hasFloat := false
+	floatLine := -1
 	var tableName string
 	columnName := make([]string, 0)
 	primaryColumnName := make([]string, 0)
@@ -635,13 +667,13 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int, 
 				primaryColumnIndex = append(primaryColumnIndex, numColumn)
 			}
 			if isFloat(line) {
-				hasFloat = true
+				floatLine = numColumn
 			}
 			numColumn++
 		} else if !isLastline(line) {
 			getPrimaryName(&primaryColumnName, line)
 		}
-		//fmt.Printf("%s\n", line)
+		fmt.Printf("%s\n", line)
 	}
 	if len(primaryColumnName) != 0 {
 		for i := 0; i < len(primaryColumnName); i++ {
@@ -663,7 +695,7 @@ func HandleSql(folder, database, table string) (string, []string, []int, []int, 
 	//fmt.Println(column_name)
 	//fmt.Println(unique_column_index)
 	//fmt.Println(primary_column_index)
-	return tableName, columnName, uniqueColumnIndex, primaryColumnIndex, hasFloat
+	return tableName, columnName, uniqueColumnIndex, primaryColumnIndex, floatLine
 }
 
 func transferFloatToDouble(d string) string {
@@ -689,7 +721,7 @@ func transferFloatToDouble(d string) string {
 	num = num/10
 	s := strconv.FormatInt(int64(num), 10)
 	s = s[:chuyi] + "." + s[chuyi:6]
-	fmt.Println(s)
+	//fmt.Println(s)
 	return s
 }
 
