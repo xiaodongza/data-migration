@@ -360,7 +360,7 @@ func createDatabase(database string) {
 }
 
 func handleData() {
-	//wg := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	dbs := make([]string, 0)
 	// dbs = append(dbs, "a", "b", "c", "d", "e", "f", "g")
 	dbs = append(dbs, `a`, `b`, `c`, `d`, `e`, `f`, `g`)
@@ -485,13 +485,20 @@ func handleData() {
 							queue = append(queue, &record)
 						}
 					}
+					if len(queue) > 10000 {
+						wg.Add(1)
+						go func(q []*[]string) {
+							defer wg.Done()
+							sqlExec(db, i, q)
+						}(queue)
+						queue = queue[:0]
+					}
 				}
 				csvFile.Close()
 			}
 			mapForJail := make(map[string]*[]string, 0)
 			if len(jail) != 0 {
 				for _, rec1 := range jail {
-
 					if value, ok := mapForJail[rec1[primaryColumnIndex[0]]]; ok {
 						value1 := *value
 						if equals(rec1, value1, primaryColumnIndex, len(primaryColumnIndex), floatLine) {
@@ -510,7 +517,7 @@ func handleData() {
 			for _, v := range mapForJail {
 				queue = append(queue, v)
 			}
-			fmt.Println("start insert")
+			fmt.Println("start insert others")
 			sqlExec(db, i, queue)
 			//wg.Add(1)
 			//go func(q []*[]string) {
